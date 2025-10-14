@@ -94,7 +94,7 @@ function Get-AllCommits {
             $gitArgs += $MaxCommits.ToString()
         }
         
-        $commits = & git $gitArgs 2>$null
+        $commits = & git $gitArgs 2>$null | Where-Object { $_ }
         
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to retrieve Git commits"
@@ -114,7 +114,7 @@ function Get-AllCommits {
             }
         }
         
-        return $commitObjects
+        return ,$commitObjects
     }
     finally {
         Set-Location $originalLocation
@@ -159,13 +159,20 @@ function Test-BinaryFile {
     try {
         Set-Location $RepoPath
         
-        # Use git to check if file is binary
-        $null = git show "${CommitHash}:${FilePath}" | git check-attr --stdin binary 2>$null
-        return $LASTEXITCODE -eq 0
-    }
-    catch {
-        # If we can't determine, assume it's text
-        return $false
+        # Get file content and check for null bytes (simple binary detection)
+        try {
+            $content = git show "${CommitHash}:${FilePath}" 2>$null
+            if ($LASTEXITCODE -ne 0) {
+                return $false
+            }
+            
+            # Check if content contains null bytes (indication of binary file)
+            return $content -match [char]0
+        }
+        catch {
+            # If we can't read content, assume it's binary
+            return $true
+        }
     }
     finally {
         Set-Location $originalLocation
