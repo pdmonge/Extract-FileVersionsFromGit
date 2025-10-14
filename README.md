@@ -1,8 +1,33 @@
 # Extract-FileVersionsFromGit
 
-A PowerShell script that extracts every version of every file that ever existed in a Git repository. Each extracted file is renamed by appending the date and time of the commit that included it to the base filename in the format `_YYYYMMDD_HHmmss`.
+A cross-platform solution for extracting every version of every file that ever existed in a Git repository. Each extracted file is renamed by appending the date and time of the commit that included it to the base filename in the format `_YYYYMMDD_HHmmss`.
 
-## Features
+## 🚀 Quick Start
+
+Choose the version that best fits your environment:
+
+### Windows Users
+```cmd
+cd powershell
+Extract-FileVersionsFromGit.bat
+```
+
+### Linux/macOS/WSL Users
+```bash
+cd bash
+./extract-file-versions-from-git.sh --help
+```
+
+## 📋 Available Implementations
+
+| Platform | Directory | Best For | Key Features |
+|----------|-----------|----------|--------------|
+| **Windows** | [`powershell/`](./powershell/) | Windows environments, PowerShell workflows | Native Windows integration, execution policy support |
+| **Unix/Linux** | [`bash/`](./bash/) | Linux, macOS, WSL, cross-platform | POSIX compliance, colored output, lightweight |
+
+## ✨ Common Features
+
+Both implementations provide identical core functionality:
 
 - **Complete History Extraction**: Processes every commit in chronological order (oldest first)
 - **Smart File Naming**: Appends commit timestamp to filenames (e.g., `file.txt` becomes `file_20251014_154738.txt`)
@@ -13,105 +38,77 @@ A PowerShell script that extracts every version of every file that ever existed 
 - **Error Handling**: Robust error handling with detailed feedback
 - **Flexible Parameters**: Configurable repository path, output directory, and processing limits
 
-## Requirements
+## 🎯 Platform Selection Guide
 
-- Windows PowerShell 5.1 or later
-- Git installed and accessible via PATH
-- Git repository to process
+### Choose PowerShell Version When:
+✅ **Windows is your primary platform**  
+✅ **PowerShell-based automation workflows**  
+✅ **Enterprise Windows environments**  
+✅ **Windows Server deployments**  
+✅ **Integration with Windows tooling**  
 
-## Usage
+**📁 [View PowerShell Version →](./powershell/)**
 
-### Option 1: Using the Batch File (Recommended)
+### Choose Bash Version When:
+✅ **Linux/macOS is your primary platform**  
+✅ **Docker/container environments**  
+✅ **CI/CD pipelines (Unix-based)**  
+✅ **Cross-platform shell scripting**  
+✅ **WSL (Windows Subsystem for Linux)**  
 
-The easiest way to run the script is using the provided batch file wrapper:
+**📁 [View Bash Version →](./bash/)**
 
-```cmd
-Extract-FileVersionsFromGit.bat
-```
+## 🔧 System Requirements
 
-You can also pass parameters:
+### General Requirements (Both Versions)
+- **Git**: Installed and accessible via PATH
+- **Git Repository**: Valid repository to process
 
-```cmd
-Extract-FileVersionsFromGit.bat -RepositoryPath "C:\MyRepo" -OutputPath "C:\ExtractedFiles"
-```
+### PowerShell Version
+- **OS**: Windows 10/11, Windows Server 2016+
+- **PowerShell**: 5.1+ or PowerShell Core 6.0+
 
-### Option 2: Direct PowerShell Execution
+### Bash Version  
+- **OS**: Linux, macOS, or Windows with WSL/Git Bash
+- **Shell**: Bash 4.0 or later
+- **Utilities**: Standard Unix tools (`date`, `grep`, `cut`, etc.)
 
-If you prefer to run the PowerShell script directly:
+## 📖 Documentation
 
+Each implementation has comprehensive documentation:
+
+- **[PowerShell Documentation](./powershell/README.md)**: Windows-specific usage, parameters, and examples
+- **[Bash Documentation](./bash/README.md)**: Unix/Linux usage, installation, and cross-platform notes
+
+## 🏃‍♂️ Quick Examples
+
+### PowerShell (Windows)
 ```powershell
-powershell.exe -ExecutionPolicy Bypass -File ".\Extract-FileVersionsFromGit.ps1"
+# Basic extraction
+powershell\Extract-FileVersionsFromGit.ps1
+
+# With date range
+powershell\Extract-FileVersionsFromGit.ps1 -StartDate "2025-01-01" -EndDate "2025-12-31"
+
+# Include binary files
+powershell\Extract-FileVersionsFromGit.ps1 -IncludeBinaryFiles
 ```
 
-## Parameters
+### Bash (Unix/Linux/macOS)
+```bash
+# Basic extraction  
+bash/extract-file-versions-from-git.sh
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `RepositoryPath` | String | `.` (current directory) | Path to the Git repository to process |
-| `OutputPath` | String | `extracted_files` | Directory where extracted files will be saved |
-| `IncludeBinaryFiles` | Switch | False | Include binary files in extraction |
-| `MaxCommits` | Integer | 0 (all commits) | Maximum number of commits to process (useful for testing) |
-| `StartDate` | DateTime | (none) | Only process commits on or after this date |
-| `EndDate` | DateTime | (none) | Only process commits on or before this date |
+# With date range
+bash/extract-file-versions-from-git.sh --start-date 2025-01-01 --end-date 2025-12-31
 
-## Examples
-
-### Basic Usage
-
-Extract all files from the current directory repository:
-```powershell
-.\Extract-FileVersionsFromGit.ps1
+# Include binary files with verbose output
+bash/extract-file-versions-from-git.sh --include-binary-files --verbose
 ```
 
-### Specify Repository and Output Paths
+## 📁 Output Structure
 
-```powershell
-.\Extract-FileVersionsFromGit.ps1 -RepositoryPath "C:\MyProject" -OutputPath "C:\AllVersions"
-```
-
-### Include Binary Files
-
-```powershell
-.\Extract-FileVersionsFromGit.ps1 -IncludeBinaryFiles
-```
-
-### Limit Processing for Testing
-
-```powershell
-.\Extract-FileVersionsFromGit.ps1 -MaxCommits 10
-```
-
-### Complete Example
-
-```powershell
-.\Extract-FileVersionsFromGit.ps1 -RepositoryPath "C:\MyRepo" -OutputPath "C:\Extracted" -IncludeBinaryFiles -MaxCommits 50
-```
-
-### Date Range Examples
-
-Extract files from commits in the last month:
-```powershell
-.\Extract-FileVersionsFromGit.ps1 -StartDate "2025-09-01" -EndDate "2025-09-30"
-```
-
-Extract files from commits after a specific date:
-```powershell
-.\Extract-FileVersionsFromGit.ps1 -StartDate "2025-10-01"
-```
-
-Extract files from commits before a specific date:
-```powershell
-.\Extract-FileVersionsFromGit.ps1 -EndDate "2025-12-31"
-```
-
-Extract files from a specific date range with binary files included:
-```powershell
-.\Extract-FileVersionsFromGit.ps1 -StartDate "2025-01-01" -EndDate "2025-12-31" -IncludeBinaryFiles
-```
-
-## Output Structure
-
-The script creates an output directory with the following structure:
+Both versions produce identical output structure:
 
 ```
 extracted_files/
@@ -167,6 +164,16 @@ For very large repositories, consider using the `-MaxCommits` parameter to test 
 ### Binary Files
 
 By default, binary files are skipped. To include them, use the `-IncludeBinaryFiles` switch. Note that this may significantly increase output size and processing time.
+
+### Using on Non-Windows Platforms
+
+If you're on Linux, macOS, or WSL, consider using the **bash version** instead:
+```bash
+cd bash/
+./extract-file-versions-from-git.sh --help
+```
+
+The bash version provides the same functionality with Unix-native implementation. See [`bash/README.md`](./bash/README.md) for detailed documentation.
 
 ## Performance Considerations
 
