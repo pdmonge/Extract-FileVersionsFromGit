@@ -7,6 +7,7 @@ A PowerShell script that extracts every version of every file that ever existed 
 - **Complete History Extraction**: Processes every commit in chronological order (oldest first)
 - **Smart File Naming**: Appends commit timestamp to filenames (e.g., `file.txt` becomes `file_20251014_154738.txt`)
 - **Directory Structure Preservation**: Maintains the original folder structure in the output
+- **Date Range Filtering**: Extract files only from commits within a specified date range
 - **Binary File Handling**: Option to include or exclude binary files from extraction
 - **Progress Reporting**: Shows real-time progress with commit processing status
 - **Error Handling**: Robust error handling with detailed feedback
@@ -50,6 +51,8 @@ powershell.exe -ExecutionPolicy Bypass -File ".\Extract-FileVersionsFromGit.ps1"
 | `OutputPath` | String | `extracted_files` | Directory where extracted files will be saved |
 | `IncludeBinaryFiles` | Switch | False | Include binary files in extraction |
 | `MaxCommits` | Integer | 0 (all commits) | Maximum number of commits to process (useful for testing) |
+| `StartDate` | DateTime | (none) | Only process commits on or after this date |
+| `EndDate` | DateTime | (none) | Only process commits on or before this date |
 
 ## Examples
 
@@ -84,6 +87,28 @@ Extract all files from the current directory repository:
 .\Extract-FileVersionsFromGit.ps1 -RepositoryPath "C:\MyRepo" -OutputPath "C:\Extracted" -IncludeBinaryFiles -MaxCommits 50
 ```
 
+### Date Range Examples
+
+Extract files from commits in the last month:
+```powershell
+.\Extract-FileVersionsFromGit.ps1 -StartDate "2025-09-01" -EndDate "2025-09-30"
+```
+
+Extract files from commits after a specific date:
+```powershell
+.\Extract-FileVersionsFromGit.ps1 -StartDate "2025-10-01"
+```
+
+Extract files from commits before a specific date:
+```powershell
+.\Extract-FileVersionsFromGit.ps1 -EndDate "2025-12-31"
+```
+
+Extract files from a specific date range with binary files included:
+```powershell
+.\Extract-FileVersionsFromGit.ps1 -StartDate "2025-01-01" -EndDate "2025-12-31" -IncludeBinaryFiles
+```
+
 ## Output Structure
 
 The script creates an output directory with the following structure:
@@ -109,11 +134,12 @@ Where:
 
 1. **Repository Validation**: Verifies that the specified path is a valid Git repository
 2. **Commit Enumeration**: Retrieves all commits in chronological order (oldest first)
-3. **File Discovery**: For each commit, identifies all files that existed at that point
-4. **Binary Detection**: Optionally filters out binary files based on content analysis
-5. **File Extraction**: Extracts each file version using `git show`
-6. **Timestamp Formatting**: Formats commit date/time into the filename
-7. **Directory Structure**: Preserves the original directory structure in the output
+3. **Date Range Filtering**: Optionally filters commits to only include those within the specified date range
+4. **File Discovery**: For each commit, identifies all files that existed at that point
+5. **Binary Detection**: Optionally filters out binary files based on content analysis
+6. **File Extraction**: Extracts each file version using `git show`
+7. **Timestamp Formatting**: Formats commit date/time into the filename
+8. **Directory Structure**: Preserves the original directory structure in the output
 
 ## Troubleshooting
 

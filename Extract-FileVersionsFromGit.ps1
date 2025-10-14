@@ -7,6 +7,8 @@
     This script iterates through every commit in a Git repository and extracts all files
     that existed at each commit. Each extracted file is renamed to include the commit
     date and time in the format: originalname_YYYYMMDD_HHmmss.extension
+    
+    Supports filtering commits by date range using StartDate and EndDate parameters.
 
 .PARAMETER RepositoryPath
     The path to the Git repository to process. Defaults to current directory.
@@ -20,11 +22,23 @@
 .PARAMETER MaxCommits
     Maximum number of commits to process. Useful for testing. If not specified, all commits are processed.
 
+.PARAMETER StartDate
+    Only process commits on or after this date. Can be combined with EndDate for a date range.
+
+.PARAMETER EndDate
+    Only process commits on or before this date. Can be combined with StartDate for a date range.
+
 .EXAMPLE
     .\Extract-FileVersionsFromGit.ps1 -RepositoryPath "C:\MyRepo" -OutputPath "C:\ExtractedFiles"
 
 .EXAMPLE
     .\Extract-FileVersionsFromGit.ps1 -RepositoryPath "." -IncludeBinaryFiles -MaxCommits 10
+
+.EXAMPLE
+    .\Extract-FileVersionsFromGit.ps1 -RepositoryPath "." -StartDate "2025-01-01" -EndDate "2025-12-31"
+
+.EXAMPLE
+    .\Extract-FileVersionsFromGit.ps1 -RepositoryPath "." -StartDate "2025-10-01"
 
 .NOTES
     Requires Git to be installed and available in PATH.
@@ -44,7 +58,13 @@ param(
     [switch]$IncludeBinaryFiles,
     
     [Parameter(Mandatory = $false)]
-    [int]$MaxCommits = 0
+    [int]$MaxCommits = 0,
+    
+    [Parameter(Mandatory = $false)]
+    [DateTime]$StartDate = [DateTime]::MinValue,
+    
+    [Parameter(Mandatory = $false)]
+    [DateTime]$EndDate = [DateTime]::MaxValue
 )
 
 # Function to check if Git is available
@@ -80,7 +100,9 @@ function Test-GitRepository {
 function Get-AllCommits {
     param(
         [string]$RepoPath,
-        [int]$MaxCommits
+        [int]$MaxCommits,
+        [DateTime]$StartDate = [DateTime]::MinValue,
+        [DateTime]$EndDate = [DateTime]::MaxValue
     )
     
     $originalLocation = Get-Location
@@ -105,10 +127,23 @@ function Get-AllCommits {
             if ($commit -and $commit.Trim()) {
                 $parts = $commit.Trim() -split '\|', 3
                 if ($parts.Count -ge 2) {
-                    $commitObjects += [PSCustomObject]@{
-                        Hash = $parts[0].Trim()
-                        DateTime = [DateTime]::Parse($parts[1].Trim())
-                        Message = if ($parts.Count -gt 2) { $parts[2].Trim() } else { "" }
+                    $commitDateTime = [DateTime]::Parse($parts[1].Trim())
+                    
+                    # Apply date range filtering
+                    $includeCommit = $true
+                    if ($StartDate -ne [DateTime]::MinValue -and $commitDateTime -lt $StartDate) {
+                        $includeCommit = $false
+                    }
+                    if ($EndDate -ne [DateTime]::MaxValue -and $commitDateTime -gt $EndDate) {
+                        $includeCommit = $false
+                    }
+                    
+                    if ($includeCommit) {
+                        $commitObjects += [PSCustomObject]@{
+                            Hash = $parts[0].Trim()
+                            DateTime = $commitDateTime
+                            Message = if ($parts.Count -gt 2) { $parts[2].Trim() } else { "" }
+                        }
                     }
                 }
             }
@@ -273,12 +308,18 @@ function Main {
     if ($MaxCommits -gt 0) {
         Write-Host "Max Commits: $MaxCommits" -ForegroundColor Cyan
     }
+    if ($StartDate -ne [DateTime]::MinValue) {
+        Write-Host "Start Date: $($StartDate.ToString('yyyy-MM-dd'))" -ForegroundColor Cyan
+    }
+    if ($EndDate -ne [DateTime]::MaxValue) {
+        Write-Host "End Date: $($EndDate.ToString('yyyy-MM-dd'))" -ForegroundColor Cyan
+    }
     Write-Host ""
     
     # Get all commits
     Write-Host "Retrieving commit history..." -ForegroundColor Yellow
     try {
-        $commits = Get-AllCommits -RepoPath $repoFullPath -MaxCommits $MaxCommits
+        $commits = Get-AllCommits -RepoPath $repoFullPath -MaxCommits $MaxCommits -StartDate $StartDate -EndDate $EndDate
         Write-Host "Found $($commits.Count) commits to process." -ForegroundColor Green
     }
     catch {
