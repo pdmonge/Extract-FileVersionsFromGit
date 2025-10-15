@@ -15,7 +15,7 @@ Extract-FileVersionsFromGit.bat
 ### Linux/macOS/WSL Users
 ```bash
 cd bash
-./extract-file-versions-from-git.sh --help
+./extract-file-versions-from-git.sh
 ```
 
 ## 📋 Available Implementations
