@@ -1,0 +1,25 @@
+# Test output directories
+test/test_output/
+
+# Extracted files from script runs
+extracted_files/
+**/extracted/
+
+# PowerShell temporary files
+*.tmp
+*.cmd.tmp
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log

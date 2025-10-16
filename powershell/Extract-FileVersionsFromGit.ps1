@@ -1,3 +1,6 @@
+<#
+    VERSION: 1.1.0
+#>
 #Requires -Version 5.1
 <#
 .SYNOPSIS
@@ -43,10 +46,15 @@
 .NOTES
     Requires Git to be installed and available in PATH.
     Author: GitHub Copilot
-    Version: 1.0
+    Version: 1.1.0
+    Release Date: 2025-10-16
+    Changelog:
+      - 1.1.0: Major binary file handling fix, improved UTF-8 support, enhanced detection, full test suite
 #>
 
 [CmdletBinding()]
+# Script version
+$VERSION = "1.1.0"
 param(
     [Parameter(Mandatory = $false)]
     [string]$RepositoryPath = ".",
@@ -196,13 +204,26 @@ function Test-BinaryFile {
         
         # Get file content and check for null bytes (simple binary detection)
         try {
+            # Use git to check if file is binary (more reliable than manual detection)
+            $checkBinary = git diff --numstat 4b825dc642cb6eb9a060e54bf8d69288fbee4904 "${CommitHash}" -- "${FilePath}" 2>$null
+            
+            if ($LASTEXITCODE -eq 0 -and $checkBinary) {
+                # Git diff --numstat shows "-" for binary files
+                if ($checkBinary -match "^-\s+-\s+") {
+                    return $true
+                }
+            }
+            
+            # Fallback: Check for null bytes in content
             $content = git show "${CommitHash}:${FilePath}" 2>$null
             if ($LASTEXITCODE -ne 0) {
                 return $false
             }
             
             # Check if content contains null bytes (indication of binary file)
-            return $content -match [char]0
+            # Use -Raw parameter to get as single string if possible
+            $contentString = if ($content -is [array]) { $content -join "`n" } else { $content }
+            return [bool]($contentString -match "`0")
         }
         catch {
             # If we can't read content, assume it's binary
@@ -221,7 +242,8 @@ function Export-FileFromCommit {
         [string]$CommitHash,
         [string]$FilePath,
         [string]$OutputDir,
-        [DateTime]$CommitDateTime
+        [DateTime]$CommitDateTime,
+        [bool]$IsBinary = $false
     )
     
     $originalLocation = Get-Location
@@ -255,16 +277,56 @@ function Export-FileFromCommit {
         # Full output path
         $outputFilePath = Join-Path $outputSubDir $newFileName
         
-        # Extract the file from the commit
-        $fileContent = git show "${CommitHash}:${FilePath}" 2>$null
-        
-        if ($LASTEXITCODE -eq 0) {
-            # Write content to file
-            $fileContent | Out-File -FilePath $outputFilePath -Encoding UTF8
-            return $outputFilePath
+        # Extract the file from the commit directly to disk
+        # Use git archive or git show with binary-safe output redirection
+        if ($IsBinary) {
+            # For binary files, use git's binary-safe output with cmd.exe redirection
+            # This avoids PowerShell's string encoding issues
+            $tempScript = [System.IO.Path]::GetTempFileName() + ".cmd"
+            try {
+                # Create a cmd script to handle binary output properly
+                "@echo off`ngit show `"${CommitHash}:${FilePath}`" > `"$outputFilePath`" 2>nul" | Out-File -FilePath $tempScript -Encoding ASCII
+                $process = Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$tempScript`"" -NoNewWindow -Wait -PassThru -WorkingDirectory $RepoPath
+                
+                if ($process.ExitCode -eq 0 -and (Test-Path $outputFilePath)) {
+                    return $outputFilePath
+                } else {
+                    Write-Warning "Failed to extract binary file '$FilePath' from commit $CommitHash"
+                    if (Test-Path $outputFilePath) {
+                        Remove-Item $outputFilePath -Force
+                    }
+                    return $null
+                }
+            }
+            finally {
+                if (Test-Path $tempScript) {
+                    Remove-Item $tempScript -Force
+                }
+            }
         } else {
-            Write-Warning "Failed to extract file '$FilePath' from commit $CommitHash"
-            return $null
+            # For text files, use cmd.exe redirection as well to preserve encoding
+            # Git handles UTF-8 properly, and cmd redirection preserves it
+            $tempScript = [System.IO.Path]::GetTempFileName() + ".cmd"
+            try {
+                # Create a cmd script to handle text output with proper encoding
+                "@echo off`nchcp 65001 >nul`ngit show `"${CommitHash}:${FilePath}`" > `"$outputFilePath`" 2>nul" | Out-File -FilePath $tempScript -Encoding ASCII
+                $process = Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$tempScript`"" -NoNewWindow -Wait -PassThru -WorkingDirectory $RepoPath
+                
+                if ($process.ExitCode -eq 0 -and (Test-Path $outputFilePath)) {
+                    return $outputFilePath
+                } else {
+                    Write-Warning "Failed to extract text file '$FilePath' from commit $CommitHash"
+                    if (Test-Path $outputFilePath) {
+                        Remove-Item $outputFilePath -Force
+                    }
+                    return $null
+                }
+            }
+            finally {
+                if (Test-Path $tempScript) {
+                    Remove-Item $tempScript -Force
+                }
+            }
         }
     }
     finally {
@@ -350,18 +412,18 @@ function Main {
         
         foreach ($file in $files) {
             try {
-                # Check if file is binary (skip if not including binary files)
-                if (-not $IncludeBinaryFiles) {
-                    $isBinary = Test-BinaryFile -RepoPath $repoFullPath -CommitHash $commit.Hash -FilePath $file
-                    if ($isBinary) {
-                        Write-Verbose "Skipping binary file: $file"
-                        $skippedFiles++
-                        continue
-                    }
+                # Check if file is binary
+                $isBinary = Test-BinaryFile -RepoPath $repoFullPath -CommitHash $commit.Hash -FilePath $file
+                
+                # Skip binary files if not including them
+                if ($isBinary -and -not $IncludeBinaryFiles) {
+                    Write-Verbose "Skipping binary file: $file"
+                    $skippedFiles++
+                    continue
                 }
                 
-                # Extract the file
-                $extractedPath = Export-FileFromCommit -RepoPath $repoFullPath -CommitHash $commit.Hash -FilePath $file -OutputDir $outputFullPath -CommitDateTime $commit.DateTime
+                # Extract the file (passing binary status for proper handling)
+                $extractedPath = Export-FileFromCommit -RepoPath $repoFullPath -CommitHash $commit.Hash -FilePath $file -OutputDir $outputFullPath -CommitDateTime $commit.DateTime -IsBinary $isBinary
                 
                 if ($extractedPath) {
                     $processedFiles++

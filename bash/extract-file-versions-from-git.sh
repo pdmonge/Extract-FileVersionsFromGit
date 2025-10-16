@@ -14,8 +14,15 @@
 # - bash 4.0 or later
 # - Standard Unix utilities (date, mkdir, etc.)
 #
+
 # Author: GitHub Copilot
-# Version: 1.0
+# Version: 1.1.0
+# Release Date: 2025-10-16
+# Changelog:
+#   - 1.1.0: Major binary file handling fix, improved UTF-8 support, enhanced detection, full test suite
+
+# Script version
+VERSION="1.1.0"
 
 set -euo pipefail
 
@@ -35,9 +42,9 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Function to display help
 show_help() {
     cat << EOF
+Extract-FileVersionsFromGit v$VERSION
 Usage: $0 [OPTIONS]
 
 Extract all versions of every file from a Git repository.
