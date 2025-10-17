@@ -1,6 +1,13 @@
-# Extract-FileVersionsFromGit
+
+# Extract-FileVersionsFromGit ![Version](https://img.shields.io/badge/version-1.2.0-blue)
+
 
 A cross-platform solution for extracting every version of every file that ever existed in a Git repository. Each extracted file is renamed by appending the date and time of the commit that included it to the base filename in the format `_YYYYMMDD_HHmmss`.
+
+---
+**Current Version:** `1.2.0`  
+**Release Date:** 2025-10-16
+---
 
 ## 🚀 Quick Start
 
@@ -181,6 +188,30 @@ The bash version provides the same functionality with Unix-native implementation
 - Binary files significantly increase extraction time and disk usage
 - Use `-MaxCommits` for testing on large repositories
 - The script processes commits sequentially to maintain chronological order
+
+
+
+## 📢 Recent Updates
+
+### October 16, 2025 - v1.2.0 Enhanced Binary Detection
+
+Enhanced the bash version with improved binary file detection that correctly handles extensionless text files like LICENSE, README (without .md), CHANGELOG, and other common repository files. The detection now uses a three-tier approach: extensionless file patterns, extension-based detection, and content analysis.
+
+- 📄 [Release Notes](./docs/1.2.0/RELEASE_NOTES.md)
+
+**Key Improvements:**
+- ✅ Correctly identifies LICENSE, README, CHANGELOG as text files
+- ✅ Enhanced extension-based detection with more file types
+- ✅ More accurate binary/text classification
+- ✅ Maintains backward compatibility
+
+
+### October 16, 2025 - v1.1.0 Binary File Handling Patch
+
+A major patch was released to fix binary file extraction in the PowerShell version. Binary files are now extracted byte-for-byte, and UTF-8 text handling is improved. The patch is fully tested and backward compatible.
+
+- 📄 [Patch Summary](./docs/1.1.0/PATCH_SUMMARY.md)
+
 
 ## License
 

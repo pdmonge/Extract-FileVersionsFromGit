@@ -1,0 +1,35 @@
+# Test output directories
+test/test_output/
+test/bash-*-output/
+test/v*-test/
+
+# Extracted files from script runs
+extracted_files/
+**/extracted/
+
+# Test files created during development
+test_binary.dat
+test/bash-current-repo-output/
+test/bash-fixed-output/
+test/bash-license-test/
+test/v1.2.0-*
+
+# PowerShell temporary files
+*.tmp
+*.cmd.tmp
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+test/bash-test-repo/
