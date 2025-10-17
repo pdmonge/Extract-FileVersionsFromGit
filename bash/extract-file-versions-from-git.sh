@@ -16,13 +16,14 @@
 #
 
 # Author: GitHub Copilot
-# Version: 1.1.0
+# Version: 1.2.0
 # Release Date: 2025-10-16
 # Changelog:
+#   - 1.2.0: Enhanced binary file detection with extensionless file support, improved accuracy
 #   - 1.1.0: Major binary file handling fix, improved UTF-8 support, enhanced detection, full test suite
 
 # Script version
-VERSION="1.1.0"
+VERSION="1.2.0"
 
 set -euo pipefail
 
@@ -232,8 +233,39 @@ is_binary_file() {
     
     cd "$repo_path"
     
-    # Get file content and check for null bytes
-    if git show "${commit_hash}:${file_path}" 2>/dev/null | grep -q $'\0'; then
+    # Get filename and extension
+    local filename=$(basename "$file_path")
+    local extension="${file_path##*.}"
+    
+    # Check for common extensionless text files first
+    case "${filename^^}" in
+        LICENSE|README|CHANGELOG|AUTHORS|CONTRIBUTORS|COPYING|INSTALL|NEWS|TODO|MAKEFILE|DOCKERFILE)
+            cd "$original_dir"
+            return 1  # Treat as text
+            ;;
+    esac
+    
+    # Check file extension (common text file extensions)
+    if [[ "$file_path" == *"."* ]]; then
+        case "${extension,,}" in
+            txt|md|sh|ps1|bat|py|js|html|htm|css|json|xml|yml|yaml|csv|log|conf|config|ini|cfg|gitignore)
+                cd "$original_dir"
+                return 1  # Treat as text
+                ;;
+        esac
+        
+        # Check for common binary extensions
+        case "${extension,,}" in
+            exe|dll|bin|so|dylib|png|jpg|jpeg|gif|bmp|zip|tar|gz|pdf|doc|docx|xls|xlsx)
+                cd "$original_dir"
+                return 0  # Treat as binary
+                ;;
+        esac
+    fi
+    
+    # For unknown extensions, use content-based detection
+    # Check first 512 bytes for null bytes (more efficient than full file)
+    if git show "${commit_hash}:${file_path}" 2>/dev/null | head -c 512 | grep -q $'\0'; then
         cd "$original_dir"
         return 0  # Is binary
     fi

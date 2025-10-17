@@ -1,11 +1,11 @@
 
-# Extract-FileVersionsFromGit ![Version](https://img.shields.io/badge/version-1.1.0-blue)
+# Extract-FileVersionsFromGit ![Version](https://img.shields.io/badge/version-1.2.0-blue)
 
 
 A cross-platform solution for extracting every version of every file that ever existed in a Git repository. Each extracted file is renamed by appending the date and time of the commit that included it to the base filename in the format `_YYYYMMDD_HHmmss`.
 
 ---
-**Current Version:** `1.1.0`  
+**Current Version:** `1.2.0`  
 **Release Date:** 2025-10-16
 ---
 
@@ -192,6 +192,16 @@ The bash version provides the same functionality with Unix-native implementation
 
 
 ## 📢 Recent Updates
+
+### October 16, 2025 - v1.2.0 Enhanced Binary Detection
+
+Enhanced the bash version with improved binary file detection that correctly handles extensionless text files like LICENSE, README (without .md), CHANGELOG, and other common repository files. The detection now uses a three-tier approach: extensionless file patterns, extension-based detection, and content analysis.
+
+**Key Improvements:**
+- ✅ Correctly identifies LICENSE, README, CHANGELOG as text files
+- ✅ Enhanced extension-based detection with more file types
+- ✅ More accurate binary/text classification
+- ✅ Maintains backward compatibility
 
 ### October 16, 2025 - v1.1.0 Binary File Handling Patch
 
